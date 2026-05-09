@@ -1,6 +1,7 @@
 // pages/dev.js — Developer Portal
 import { useState, useEffect, useCallback } from 'react';
 import Head from 'next/head';
+import Image from 'next/image';
 import QRCode from 'qrcode';
 
 const DEV_PASSWORD = process.env.NEXT_PUBLIC_DEV_PASSWORD || 'restaurantos-dev-2026';
@@ -292,7 +293,7 @@ export default function DevPortal() {
                       </label>
                       {menuForm.image_url && (
                         <div className="w-10 h-10 rounded-lg bg-white/10 overflow-hidden shrink-0 border border-white/20">
-                          <img src={menuForm.image_url} alt="Preview" className="w-full h-full object-cover" />
+                          <Image src={menuForm.image_url} alt="Preview" width={40} height={40} className="w-full h-full object-cover" />
                         </div>
                       )}
                     </div>
@@ -315,7 +316,7 @@ export default function DevPortal() {
                             <div key={item.id} className="flex items-center justify-between bg-white/5 border border-white/10 rounded-xl px-4 py-3 mb-2 group">
                               <div className="flex items-center gap-4">
                                 {item.image_url ? (
-                                  <img src={item.image_url} alt={item.name} className="w-12 h-12 rounded-lg object-cover bg-black/20" />
+                                  <Image src={item.image_url} alt={item.name} width={48} height={48} className="w-12 h-12 rounded-lg object-cover bg-black/20" />
                                 ) : (
                                   <div className="w-12 h-12 rounded-lg bg-black/20 flex items-center justify-center text-gray-500">
                                     <span className="material-symbols-outlined text-[20px]">image</span>
@@ -426,7 +427,7 @@ export default function DevPortal() {
                           </button>
                         </div>
                         {qrMap[t.id] && (
-                          <img src={qrMap[t.id]} alt={`QR Table ${t.number}`} className="w-full rounded-xl bg-white p-1 mb-3" />
+                          <Image src={qrMap[t.id]} alt={`QR Table ${t.number}`} width={300} height={300} className="w-full rounded-xl bg-white p-1 mb-3" />
                         )}
                         <p className="text-[10px] text-gray-600 break-all font-mono">{t.token}</p>
                         <a href={`/menu?token=${t.token}`} target="_blank" rel="noreferrer"

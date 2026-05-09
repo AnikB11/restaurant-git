@@ -1,6 +1,7 @@
 // pages/premium.js
 import { useState, useEffect, useCallback } from 'react';
 import Head from 'next/head';
+import Image from 'next/image';
 import { useAuth } from '../lib/hooks/useAuth';
 import LoginForm from '../components/LoginForm';
 
@@ -222,7 +223,7 @@ export default function PremiumDashboard() {
                 <div key={item.id} className="flex items-center justify-between p-6 rounded-[24px] bg-white/5 border border-white/10 transition-all hover:border-white/20">
                   <div className="flex items-center gap-4">
                     {item.image_url ? (
-                      <img src={item.image_url} alt={item.name} className="w-12 h-12 rounded-xl object-cover" />
+                      <Image src={item.image_url} alt={item.name} width={48} height={48} className="w-12 h-12 rounded-xl object-cover" />
                     ) : (
                       <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center text-gray-500">
                         <span className="material-symbols-outlined">restaurant</span>
@@ -274,7 +275,7 @@ export default function PremiumDashboard() {
                <div className="flex items-center justify-between">
                   <div>
                      <h3 className="font-bold text-lg">Multi-Language Menu</h3>
-                     <p className="text-sm text-gray-400 mt-1">Auto-translate menu to guest's phone language.</p>
+                     <p className="text-sm text-gray-400 mt-1">Auto-translate menu to guest&apos;s phone language.</p>
                   </div>
                   <button className="relative inline-flex h-6 w-11 items-center rounded-full bg-amber-500 transition-colors">
                     <span className="inline-block h-4 w-4 transform rounded-full bg-white translate-x-6 transition-transform" />
@@ -298,7 +299,7 @@ export default function PremiumDashboard() {
                   
                   <div className="space-y-4 bg-black/20 p-6 rounded-2xl border border-white/5">
                      <div className="flex items-center gap-4">
-                        <img src="https://ui-avatars.com/api/?name=Sarah+Jenkins&background=c8853a&color=fff" className="w-12 h-12 rounded-full" />
+                        <Image src="https://ui-avatars.com/api/?name=Sarah+Jenkins&background=c8853a&color=fff" alt="Sarah Jenkins, Senior Success Manager" width={48} height={48} className="w-12 h-12 rounded-full" />
                         <div>
                            <div className="font-bold text-lg">Sarah Jenkins</div>
                            <div className="text-amber-400 text-sm">Senior Success Manager</div>

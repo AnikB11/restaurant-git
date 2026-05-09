@@ -1,5 +1,6 @@
 // components/MenuCard.jsx
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 
 export default function MenuCard({ item, onAdd, cartQuantity = 0 }) {
   const [adding, setAdding] = useState(false);
@@ -34,10 +35,11 @@ export default function MenuCard({ item, onAdd, cartQuantity = 0 }) {
         {/* Image */}
         <div className="relative h-40 bg-surface-variant overflow-hidden group">
           {item.image_url ? (
-            <img
+            <Image
               src={item.image_url}
               alt={item.name}
-              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+              fill
+              className="object-cover transition-transform duration-700 group-hover:scale-110"
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-5xl bg-surface-container-low text-primary/20">
@@ -117,7 +119,7 @@ export default function MenuCard({ item, onAdd, cartQuantity = 0 }) {
             {/* Header Image & Close */}
             <div className="relative h-64 sm:h-80 shrink-0 bg-surface-variant">
               {item.image_url ? (
-                <img src={item.image_url} alt={item.name} className="w-full h-full object-cover" />
+                <Image src={item.image_url} alt={item.name} fill className="object-cover" />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-8xl text-primary/20">
                   {categoryEmoji(item.category)}

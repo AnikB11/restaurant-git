@@ -1,6 +1,7 @@
 // pages/menu.js
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
+import Image from 'next/image';
 import { useRouter } from 'next/router';
 import {
   doc,
@@ -521,7 +522,7 @@ function QuickDrinkCard({ item, selected, onToggle }) {
     >
       <span className="text-4xl mb-4">
         {item.image_url ? (
-          <img src={item.image_url} alt={item.name} className="w-12 h-12 rounded-full object-cover mx-auto" />
+          <Image src={item.image_url} alt={item.name} width={48} height={48} className="w-12 h-12 rounded-full object-cover mx-auto" />
         ) : (
           <span className={`material-symbols-outlined text-4xl ${selected ? 'text-on-primary' : 'text-primary'}`}>local_bar</span>
         )}
