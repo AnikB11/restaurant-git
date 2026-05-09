@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Head from 'next/head';
+import QRCode from 'qrcode';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 
 export default function Home() {
   const [tables, setTables] = useState([]);
+  const [qrMap, setQrMap] = useState({});
 
   useEffect(() => {
     async function loadTables() {
@@ -15,7 +17,16 @@ export default function Home() {
         // Deduplicate by table number (handles multiple seed runs)
         const seen = new Map();
         all.forEach(t => { if (!seen.has(t.number)) seen.set(t.number, t); });
-        setTables([...seen.values()]);
+        const uniqueTables = [...seen.values()];
+        setTables(uniqueTables);
+
+        // Generate QR codes
+        const qrs = {};
+        const base = window.location.origin;
+        for (const t of uniqueTables) {
+          qrs[t.id] = await QRCode.toDataURL(`${base}/menu?tableId=${t.number}`, { width: 200, margin: 1 });
+        }
+        setQrMap(qrs);
       } catch (err) {
         console.error(err);
       }
@@ -87,8 +98,13 @@ export default function Home() {
             <div className="grid grid-cols-2 gap-3">
               {tables.map(table => (
                 <Link key={table.id} href={`/menu?tableId=${table.number}`}>
-                  <button className="w-full py-3 rounded-xl bg-surface border border-outline-variant/50 text-on-surface font-label-sm hover:border-primary hover:text-primary transition-colors shadow-sm active:scale-95">
-                    Table {table.number}
+                  <button className="w-full p-4 rounded-xl bg-surface border border-outline-variant/50 hover:border-primary group transition-colors shadow-sm active:scale-95 flex flex-col items-center justify-center">
+                    {qrMap[table.id] ? (
+                      <img src={qrMap[table.id]} alt={`Table ${table.number} QR`} className="w-24 h-24 mb-3 rounded-lg border border-outline-variant/20 bg-white" />
+                    ) : (
+                      <div className="w-24 h-24 mb-3 bg-surface-variant/50 rounded-lg animate-pulse" />
+                    )}
+                    <span className="text-on-surface font-label-sm group-hover:text-primary transition-colors">Table {table.number}</span>
                   </button>
                 </Link>
               ))}
