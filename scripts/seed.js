@@ -97,9 +97,9 @@ async function seed() {
 
   // ── 4. Staff accounts ────────────────────────────────────────────────
   const staffMembers = [
-    { email: 'kitchen@saffron.com', password: 'kitchen123', name: 'Ravi Kumar', role: 'kitchen' },
-    { email: 'counter@saffron.com', password: 'counter123', name: 'Priya Sharma', role: 'counter' },
-    { email: 'admin@saffron.com', password: 'admin123', name: 'Admin', role: 'admin' },
+    { email: 'kitchen@saffron.com', password: 'YOUR_PASSWORD_HERE', name: 'Ravi Kumar', role: 'kitchen' },
+    { email: 'counter@saffron.com', password: 'YOUR_PASSWORD_HERE', name: 'Priya Sharma', role: 'counter' },
+    { email: 'admin@saffron.com', password: 'YOUR_PASSWORD_HERE', name: 'Admin', role: 'admin' },
   ];
 
   for (const staff of staffMembers) {
@@ -129,8 +129,9 @@ async function seed() {
   console.log('\n🎉 Seed complete!\n');
   console.log('───────────────────────────────────────');
   console.log('STAFF LOGINS:');
-  console.log('  Kitchen:  kitchen@saffron.com / kitchen123');
-  console.log('  Counter:  counter@saffron.com / counter123');
+  console.log('  Kitchen:  kitchen@saffron.com / YOUR_PASSWORD_HERE');
+  console.log('  Counter:  counter@saffron.com / YOUR_PASSWORD_HERE');
+  console.log('  Admin:    admin@saffron.com / YOUR_PASSWORD_HERE');
   console.log('───────────────────────────────────────');
   console.log('GUEST QR TOKENS:');
   tables.forEach((t) => {

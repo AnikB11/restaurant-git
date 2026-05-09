@@ -4,7 +4,7 @@ import Head from 'next/head';
 import Image from 'next/image';
 import QRCode from 'qrcode';
 
-const DEV_PASSWORD = process.env.NEXT_PUBLIC_DEV_PASSWORD || 'restaurantos-dev-2026';
+const DEV_PASSWORD = process.env.NEXT_PUBLIC_DEV_PASSWORD || 'YOUR_DEV_PASSWORD_HERE';
 
 function devFetch(url, opts = {}) {
   return fetch(url, {

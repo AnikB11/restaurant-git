@@ -11,9 +11,9 @@ initializeApp({ credential: cert(serviceAccount) });
 const auth = getAuth();
 
 const staffMembers = [
-  { email: 'kitchen@saffron.com', password: 'kitchen123' },
-  { email: 'counter@saffron.com', password: 'counter123' },
-  { email: 'admin@saffron.com',   password: 'admin123'   },
+  { email: 'kitchen@saffron.com', password: 'YOUR_PASSWORD_HERE' },
+  { email: 'counter@saffron.com', password: 'YOUR_PASSWORD_HERE' },
+  { email: 'admin@saffron.com',   password: 'YOUR_PASSWORD_HERE' },
 ];
 
 async function resetPasswords() {
