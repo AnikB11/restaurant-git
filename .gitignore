@@ -1,2 +1,4 @@
 scripts/serviceAccountKey.json 
 node_modules
+.next 
+node_modules 
