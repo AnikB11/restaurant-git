@@ -2,7 +2,7 @@
 import { useState, useMemo } from 'react';
 import Head from 'next/head';
 import { useAuth } from '../lib/hooks/useAuth';
-import { useRestaurantOrders, markPaymentComplete, acknowledgeStaffCall } from '../lib/hooks/useOrders';
+import { useRestaurantOrders, markPaymentComplete, acknowledgeStaffCall, shiftTable, rejectTableShift } from '../lib/hooks/useOrders';
 import { useNotificationSound } from '../lib/hooks/useNotificationSound';
 import LoginForm from '../components/LoginForm';
 import OrderCard from '../components/OrderCard';
@@ -13,6 +13,11 @@ export default function CounterPage() {
   const { user, staffProfile, loading, error, login, logout } = useAuth();
   const [tab, setTab] = useState(TABS.TABLES);
   const [selectedTable, setSelectedTable] = useState(null);
+
+  const [revenueDate, setRevenueDate] = useState(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  });
 
   const restaurantId = staffProfile?.restaurant_id;
   const { orders, loading: ordersLoading } = useRestaurantOrders(restaurantId);
@@ -53,15 +58,25 @@ export default function CounterPage() {
   const tables = Object.values(tableMap).sort((a, b) => a.tableNumber - b.tableNumber);
 
   // Revenue
-  const todayRevenue = paidOrders.reduce((s, o) => s + (o.total || o.subtotal || 0), 0);
+  const getOrderDateStr = (order) => {
+    const timestamp = order.paid_at || order.created_at;
+    if (!timestamp) return '';
+    const d = timestamp?.toDate ? timestamp.toDate() : new Date(timestamp);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  };
+
+  const filteredPaidOrders = paidOrders.filter((o) => getOrderDateStr(o) === revenueDate);
+
+  const todayRevenue = filteredPaidOrders.reduce((s, o) => s + (o.total || o.subtotal || 0), 0);
   const pendingRevenue = activeOrders.reduce((s, o) => s + (o.subtotal || 0), 0);
-  const avgOrder = paidOrders.length
-    ? Math.round(todayRevenue / paidOrders.length)
+  const avgOrder = filteredPaidOrders.length
+    ? Math.round(todayRevenue / filteredPaidOrders.length)
     : 0;
 
   // Alerts
   const billRequests = activeOrders.filter((o) => o.bill_requested && o.payment_status === 'pending');
   const staffCalls = activeOrders.filter((o) => o.staff_called);
+  const shiftRequests = activeOrders.filter((o) => o.shift_requested != null);
 
   const selectedTableOrders = selectedTable
     ? (tableMap[selectedTable]?.orders || [])
@@ -69,6 +84,18 @@ export default function CounterPage() {
 
   const handleMarkPaid = async (orderId) => {
     await markPaymentComplete(orderId);
+  };
+
+  const handleApproveShift = async (order) => {
+    try {
+      await shiftTable(restaurantId, order.table_id, order.shift_requested);
+    } catch (e) {
+      alert(e.message || 'Could not shift table — check that the target table exists.');
+    }
+  };
+
+  const handleRejectShift = async (orderId) => {
+    await rejectTableShift(orderId);
   };
 
   return (
@@ -126,6 +153,15 @@ export default function CounterPage() {
               icon="notifications_active"
               message={`Staff assistance needed at Table${staffCalls.length > 1 ? 's' : ''}: ${[...new Set(staffCalls.map((o) => o.table_number))].join(', ')}`}
               onDismiss={() => staffCalls.forEach((o) => acknowledgeStaffCall(o.id))}
+            />
+          )}
+          {shiftRequests.length > 0 && (
+            <AlertBanner
+              color="text-amber-600"
+              bg="bg-amber-50"
+              border="border-amber-200"
+              icon="swap_horiz"
+              message={`Table shift requested: Table${shiftRequests.length > 1 ? 's' : ''} ${[...new Set(shiftRequests.map((o) => o.table_number))].join(', ')} → ${[...new Set(shiftRequests.map((o) => o.shift_requested))].join(', ')}. Open the table to approve.`}
             />
           )}
         </div>
@@ -188,7 +224,14 @@ export default function CounterPage() {
               </div>
 
               <div className="lg:col-span-1">
-                <div className="sticky top-[180px]">
+                <div className="sticky top-[180px] flex flex-col gap-6">
+                  {selectedTableOrders.some((o) => o.shift_requested != null) && (
+                    <ShiftApprovalCard
+                      orders={selectedTableOrders.filter((o) => o.shift_requested != null)}
+                      onApprove={handleApproveShift}
+                      onReject={handleRejectShift}
+                    />
+                  )}
                   <BillSummaryCard
                     orders={selectedTableOrders}
                     onMarkPaid={handleMarkPaid}
@@ -249,11 +292,24 @@ export default function CounterPage() {
         {/* ── REVENUE TAB ─────────────────────────────────────────── */}
         {tab === TABS.REVENUE && (
           <div className="px-8 pb-16 pt-6 animate-fade-in">
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="text-3xl font-noto-serif font-bold text-on-surface">Revenue Dashboard</h2>
+              <div className="flex items-center gap-3 bg-surface border border-outline-variant/30 rounded-2xl px-4 py-2 shadow-sm">
+                <span className="material-symbols-outlined text-primary">calendar_today</span>
+                <input
+                  type="date"
+                  value={revenueDate}
+                  onChange={(e) => setRevenueDate(e.target.value)}
+                  className="bg-transparent text-on-surface font-label-sm outline-none focus:ring-0 cursor-pointer"
+                />
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
               <RevenueCard
-                label="Today's Revenue"
+                label="Selected Date Revenue"
                 value={`₹${todayRevenue.toLocaleString('en-IN')}`}
-                sub={`${paidOrders.length} paid orders`}
+                sub={`${filteredPaidOrders.length} paid orders`}
                 color="text-primary"
                 bg="bg-primary/5"
                 border="border-primary/20"
@@ -289,13 +345,13 @@ export default function CounterPage() {
             </div>
 
             <h3 className="font-noto-serif font-bold text-on-surface text-3xl mb-8">
-              Recent Transactions
+              Transactions for {new Date(revenueDate).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}
             </h3>
-            {paidOrders.length === 0 ? (
-              <p className="text-on-surface-variant font-body-md py-12">No transactions recorded yet.</p>
+            {filteredPaidOrders.length === 0 ? (
+              <p className="text-on-surface-variant font-body-md py-12">No transactions recorded for this date.</p>
             ) : (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                {paidOrders.slice(0, 20).map((order) => (
+                {filteredPaidOrders.slice(0, 20).map((order) => (
                   <div
                     key={order.id}
                     className="flex justify-between items-center p-6 bg-surface rounded-3xl border border-surface-variant/50 shadow-sm hover:shadow-md transition-shadow"
@@ -333,6 +389,7 @@ function TableTile({ table, onClick, delay = 0 }) {
   const total = table.orders.reduce((s, o) => s + (o.subtotal || 0), 0);
   const billPending = table.orders.some((o) => o.bill_requested);
   const staffCalled = table.orders.some((o) => o.staff_called);
+  const shiftPending = table.orders.some((o) => o.shift_requested != null);
 
   return (
     <button
@@ -341,13 +398,15 @@ function TableTile({ table, onClick, delay = 0 }) {
         billPending 
           ? 'border-primary shadow-[0_8px_30px_rgb(var(--color-primary)/0.15)]' 
           : staffCalled 
-            ? 'border-error shadow-[0_8px_30px_rgb(var(--color-error)/0.15)]' 
-            : 'border-surface-variant shadow-sm'
+            ? 'border-error shadow-[0_8px_30px_rgb(var(--color-error)/0.15)]'
+            : shiftPending
+              ? 'border-amber-400 shadow-[0_8px_30px_rgba(251,191,36,0.15)]'
+              : 'border-surface-variant shadow-sm'
       }`}
       style={{ animationDelay: `${delay}s` }}
     >
-      {(billPending || staffCalled) && (
-        <div className={`absolute top-0 right-0 w-32 h-32 -mr-16 -mt-16 rounded-full blur-[40px] ${billPending ? 'bg-primary/20' : 'bg-error/20'}`} />
+      {(billPending || staffCalled || shiftPending) && (
+        <div className={`absolute top-0 right-0 w-32 h-32 -mr-16 -mt-16 rounded-full blur-[40px] ${billPending ? 'bg-primary/20' : staffCalled ? 'bg-error/20' : 'bg-amber-400/20'}`} />
       )}
       
       <div className="flex justify-between items-start mb-10 relative z-10">
@@ -366,6 +425,11 @@ function TableTile({ table, onClick, delay = 0 }) {
           {staffCalled && (
             <span className="text-xs text-error font-label-sm bg-error/10 border border-error/20 px-3 py-1.5 rounded-full flex items-center gap-1.5 animate-pulse">
               <span className="material-symbols-outlined text-[14px]">pan_tool</span> Staff
+            </span>
+          )}
+          {shiftPending && (
+            <span className="text-xs text-amber-600 font-label-sm bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-full flex items-center gap-1.5 animate-pulse">
+              <span className="material-symbols-outlined text-[14px]">swap_horiz</span> Shift Req
             </span>
           )}
         </div>
@@ -477,6 +541,57 @@ function CounterTab({ active, onClick, label, icon, badge }) {
         </span>
       )}
     </button>
+  );
+}
+
+function ShiftApprovalCard({ orders, onApprove, onReject }) {
+  // Show one card per unique requested target table
+  const uniqueTargets = [...new Map(orders.map((o) => [o.shift_requested, o])).values()];
+
+  return (
+    <div className="bg-amber-50 rounded-[32px] p-8 border-2 border-amber-300 shadow-lg relative overflow-hidden animate-slide-up">
+      <div className="absolute top-0 right-0 w-32 h-32 -mr-12 -mt-12 rounded-full blur-[40px] bg-amber-300/30" />
+
+      <div className="flex items-center gap-3 mb-6 relative z-10">
+        <div className="w-10 h-10 rounded-xl bg-amber-100 border border-amber-300 flex items-center justify-center text-amber-600">
+          <span className="material-symbols-outlined text-[22px]">swap_horiz</span>
+        </div>
+        <div>
+          <p className="font-label-sm text-amber-700 text-sm uppercase tracking-wider">Table Shift Request</p>
+          <p className="font-noto-serif font-bold text-amber-900 text-lg leading-tight">Guest wants to move</p>
+        </div>
+      </div>
+
+      <div className="space-y-4 relative z-10">
+        {uniqueTargets.map((order) => (
+          <div key={order.id} className="bg-white/60 rounded-2xl border border-amber-200 p-5">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <span className="font-noto-serif font-bold text-amber-900 text-3xl">{order.table_number}</span>
+                <span className="material-symbols-outlined text-amber-500 text-[28px]">arrow_forward</span>
+                <span className="font-noto-serif font-bold text-amber-900 text-3xl">{order.shift_requested}</span>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={() => onApprove(order)}
+                className="py-3 rounded-xl bg-amber-500 text-white font-label-sm text-sm hover:bg-amber-600 active:scale-[0.97] transition-all flex items-center justify-center gap-2 shadow-sm shadow-amber-200"
+              >
+                <span className="material-symbols-outlined text-[18px]">check_circle</span>
+                Approve
+              </button>
+              <button
+                onClick={() => onReject(order.id)}
+                className="py-3 rounded-xl bg-white border border-amber-300 text-amber-700 font-label-sm text-sm hover:bg-amber-50 active:scale-[0.97] transition-all flex items-center justify-center gap-2"
+              >
+                <span className="material-symbols-outlined text-[18px]">cancel</span>
+                Reject
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 

@@ -4,6 +4,7 @@ import Head from 'next/head';
 import { useAuth } from '../lib/hooks/useAuth';
 import { useRestaurantOrders, acknowledgeStaffCall } from '../lib/hooks/useOrders';
 import { useMenu } from '../lib/hooks/useMenu';
+import { useNotificationSound } from '../lib/hooks/useNotificationSound';
 import LoginForm from '../components/LoginForm';
 import OrderCard from '../components/OrderCard';
 
@@ -21,6 +22,8 @@ export default function KitchenPage() {
   });
 
   const { menuItems, toggleAvailability, loading: menuLoading } = useMenu(restaurantId);
+
+  useNotificationSound(orders);
 
   // ── Auth guard ─────────────────────────────────────────────────────
   if (loading) return <DarkLoader />;

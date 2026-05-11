@@ -14,7 +14,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useMenu, CATEGORIES } from '../lib/hooks/useMenu';
-import { useTableOrders, placeOrder, callStaff, updateOrderStatus } from '../lib/hooks/useOrders';
+import { useTableOrders, placeOrder, callStaff, updateOrderStatus, requestTableShift } from '../lib/hooks/useOrders';
 import MenuCard from '../components/MenuCard';
 import Cart from '../components/Cart';
 import OrderTracking from '../components/OrderTracking';
@@ -180,9 +180,27 @@ export default function MenuPage() {
     if (activeOrder) await callStaff(activeOrder.id);
   };
 
+  const handleShiftTable = async () => {
+    if (!orders.length) return;
+    const activeOrder = orders.find((o) => o.payment_status === 'pending');
+    if (!activeOrder) return;
+
+    const newTableNum = window.prompt("Enter the new table number you want to shift to:");
+    if (!newTableNum) return;
+    
+    try {
+      await requestTableShift(activeOrder.id, newTableNum);
+      alert("Shift request sent to counter staff. Please wait for approval.");
+    } catch (err) {
+      alert("Failed to request table shift. Please ask staff for help.");
+      console.error(err);
+    }
+  };
+
   const hasActiveOrders = orders.some((o) => o.payment_status === 'pending');
   const billAlreadyRequested = orders.every((o) => o.bill_requested);
   const staffAlreadyCalled = orders.some((o) => o.staff_called);
+  const shiftRequested = orders.some((o) => o.shift_requested);
 
   // ── Loading / Error states ───────────────────────────────────────────
   if (!token && !queryTableId) {
@@ -489,8 +507,10 @@ export default function MenuPage() {
             onAddItems={() => setView(VIEWS.MENU)}
             onRequestBill={() => setShowBilling(true)}
             onCallStaff={handleCallStaff}
+            onShiftTable={handleShiftTable}
             billRequested={billAlreadyRequested}
             staffCalled={staffAlreadyCalled}
+            shiftRequested={shiftRequested}
             cartCount={cartCount}
           />
         )}

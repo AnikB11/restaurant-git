@@ -18,7 +18,13 @@ const STATUS_BG = {
 export default function OrderCard({ order, variant = 'kitchen' }) {
   const [updating, setUpdating] = useState(false);
   const elapsed = getElapsed(order.created_at);
-  const nextAction = NEXT_STATUS[order.status];
+  let nextAction = null;
+  if (variant === 'kitchen') {
+    if (order.status === 'received') nextAction = NEXT_STATUS.received;
+    if (order.status === 'preparing') nextAction = NEXT_STATUS.preparing;
+  } else if (variant === 'counter') {
+    if (order.status === 'ready') nextAction = NEXT_STATUS.ready;
+  }
 
   const handleStatusUpdate = async () => {
     if (!nextAction) return;
@@ -176,6 +182,27 @@ export default function OrderCard({ order, variant = 'kitchen' }) {
                 <span className="material-symbols-outlined text-[14px]">pan_tool</span> Staff Called
               </span>
             )}
+          </div>
+        )}
+
+        {nextAction && (
+          <div className="mt-4">
+            <button
+              onClick={handleStatusUpdate}
+              disabled={updating}
+              className={`w-full py-3 rounded-xl font-label-sm text-sm transition-all active:scale-[0.98] disabled:opacity-50 flex justify-center items-center gap-2 border ${nextAction.color} ${nextAction.border}`}
+            >
+              {updating ? (
+                <>
+                  <span className="material-symbols-outlined animate-spin text-[18px]">sync</span> Updating...
+                </>
+              ) : (
+                <>
+                  <span className="material-symbols-outlined text-[18px]">done_all</span>
+                  {nextAction.label}
+                </>
+              )}
+            </button>
           </div>
         )}
       </div>

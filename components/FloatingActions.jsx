@@ -5,8 +5,10 @@ export default function FloatingActions({
   onAddItems,
   onRequestBill,
   onCallStaff,
+  onShiftTable,
   billRequested,
   staffCalled,
+  shiftRequested,
   cartCount = 0,
 }) {
   const [expanded, setExpanded] = useState(false);
@@ -16,6 +18,15 @@ export default function FloatingActions({
       {/* Action buttons (animated in) */}
       {expanded && (
         <div className="flex flex-col items-end gap-3 animate-slide-up mb-2">
+          {onShiftTable && (
+            <ActionButton
+              onClick={() => { onShiftTable(); setExpanded(false); }}
+              label={shiftRequested ? 'Shift Requested ✓' : 'Shift Table'}
+              icon="transfer_within_a_station"
+              color={shiftRequested ? "bg-tertiary-container text-on-tertiary-container" : "bg-surface border border-surface-variant text-on-surface"}
+              disabled={shiftRequested}
+            />
+          )}
           <ActionButton
             onClick={() => { onAddItems(); setExpanded(false); }}
             label={cartCount > 0 ? `Add More (${cartCount} in cart)` : 'Add Items'}
