@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import Head from 'next/head';
 import QRCode from 'qrcode';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
@@ -100,7 +101,7 @@ export default function Home() {
                 <Link key={table.id} href={`/menu?tableId=${table.number}`}>
                   <button className="w-full p-4 rounded-xl bg-surface border border-outline-variant/50 hover:border-primary group transition-colors shadow-sm active:scale-95 flex flex-col items-center justify-center">
                     {qrMap[table.id] ? (
-                      <img src={qrMap[table.id]} alt={`Table ${table.number} QR`} className="w-24 h-24 mb-3 rounded-lg border border-outline-variant/20 bg-white" />
+                      <Image src={qrMap[table.id]} alt={`Table ${table.number} QR`} width={96} height={96} className="w-24 h-24 mb-3 rounded-lg border border-outline-variant/20 bg-white" />
                     ) : (
                       <div className="w-24 h-24 mb-3 bg-surface-variant/50 rounded-lg animate-pulse" />
                     )}

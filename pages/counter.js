@@ -3,6 +3,7 @@ import { useState, useMemo } from 'react';
 import Head from 'next/head';
 import { useAuth } from '../lib/hooks/useAuth';
 import { useRestaurantOrders, markPaymentComplete, acknowledgeStaffCall } from '../lib/hooks/useOrders';
+import { useNotificationSound } from '../lib/hooks/useNotificationSound';
 import LoginForm from '../components/LoginForm';
 import OrderCard from '../components/OrderCard';
 
@@ -15,6 +16,8 @@ export default function CounterPage() {
 
   const restaurantId = staffProfile?.restaurant_id;
   const { orders, loading: ordersLoading } = useRestaurantOrders(restaurantId);
+
+  useNotificationSound(orders);
 
   // ── Auth guard ──────────────────────────────────────────────────────
   if (loading) return <LightLoader />;
